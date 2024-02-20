@@ -64,7 +64,7 @@ public:
       item.get_outer_attrs (), item.get_locus ());
   }
 
-  void visit (AST::ExternalFunctionItem &function) override
+  void visit (AST::Function &function) override
   {
     std::vector<std::unique_ptr<HIR::WhereClauseItem> > where_clause_items;
     HIR::WhereClause where_clause (std::move (where_clause_items));
@@ -87,12 +87,17 @@ public:
     std::vector<HIR::NamedFunctionParam> function_params;
     for (auto it = begin; it != end; it++)
       {
+	if (it->get ()->is_self () || it->get ()->is_variadic ())
+	  continue;
+
+	auto param = static_cast<AST::FunctionParam *> (it->get ());
+
 	HIR::Type *param_type
-	  = ASTLoweringType::translate (it->get_type ().get ());
-	Identifier param_name = it->get_name ();
+	  = ASTLoweringType::translate (param->get_type ().get ());
+	Identifier param_name = param->get_pattern ().get ()->get_ident ();
 
 	auto crate_num = mappings->get_current_crate ();
-	Analysis::NodeMapping mapping (crate_num, it->get_node_id (),
+	Analysis::NodeMapping mapping (crate_num, param->get_node_id (),
 				       mappings->get_next_hir_id (crate_num),
 				       mappings->get_next_localdef_id (
 					 crate_num));
@@ -108,7 +113,7 @@ public:
 				   mappings->get_next_localdef_id (crate_num));
 
     translated = new HIR::ExternalFunctionItem (
-      mapping, function.get_identifier (), std::move (generic_params),
+      mapping, function.get_function_name (), std::move (generic_params),
       std::unique_ptr<HIR::Type> (return_type), std::move (where_clause),
       std::move (function_params), is_variadic, std::move (vis),
       function.get_outer_attrs (), function.get_locus ());

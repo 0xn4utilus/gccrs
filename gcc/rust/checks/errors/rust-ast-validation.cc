@@ -95,47 +95,65 @@ ASTValidation::visit (AST::Union &item)
 void
 ASTValidation::visit (AST::Function &function)
 {
-  const auto &qualifiers = function.get_qualifiers ();
-  if (qualifiers.is_async () && qualifiers.is_const ())
-    rust_error_at (function.get_locus (),
-		   "functions cannot be both %<const%> and %<async%>");
-
-  if (qualifiers.is_const ()
-      && (context.back () == Context::TRAIT_IMPL
-	  || context.back () == Context::TRAIT))
-    rust_error_at (function.get_locus (), ErrorCode::E0379,
-		   "functions in traits cannot be declared %<const%>");
-
-  // may change soon
-  if (qualifiers.is_async ()
-      && (context.back () == Context::TRAIT_IMPL
-	  || context.back () == Context::TRAIT))
-    rust_error_at (function.get_locus (), ErrorCode::E0706,
-		   "functions in traits cannot be declared %<async%>");
-
-  // if not an associated function but has a self parameter
-  if (context.back () != Context::TRAIT
-      && context.back () != Context::TRAIT_IMPL
-      && context.back () != Context::INHERENT_IMPL
-      && function.has_self_param ())
-    rust_error_at (
-      function.get_self_param ()->get_locus (),
-      "%<self%> parameter is only allowed in associated functions");
-
-  if (!function.has_body ())
+  if (function.is_external ())
     {
-      if (context.back () == Context::INHERENT_IMPL
-	  || context.back () == Context::TRAIT_IMPL)
+      auto &params = function.get_function_params ();
+      if (params.size () == 1 && function.is_variadic ())
 	rust_error_at (function.get_locus (),
-		       "associated function in %<impl%> without body");
-      else if (context.back () != Context::TRAIT)
-	rust_error_at (function.get_locus (), "free function without a body");
-    }
+		       "C-variadic function must be declared with at least one "
+		       "named argument");
 
-  if (function.is_variadic ())
-    rust_error_at (
-      function.get_function_params ().back ()->get_locus (),
-      "only foreign or %<unsafe extern \"C\"%> functions may be C-variadic");
+      for (auto it = params.begin (); it != params.end (); it++)
+	if (it->get ()->is_variadic () && it + 1 != params.end ())
+	  rust_error_at (
+	    it->get ()->get_locus (),
+	    "%<...%> must be the last argument of a C-variadic function");
+    }
+  else
+    {
+      const auto &qualifiers = function.get_qualifiers ();
+      if (qualifiers.is_async () && qualifiers.is_const ())
+	rust_error_at (function.get_locus (),
+		       "functions cannot be both %<const%> and %<async%>");
+
+      if (qualifiers.is_const ()
+	  && (context.back () == Context::TRAIT_IMPL
+	      || context.back () == Context::TRAIT))
+	rust_error_at (function.get_locus (), ErrorCode::E0379,
+		       "functions in traits cannot be declared %<const%>");
+
+      // may change soon
+      if (qualifiers.is_async ()
+	  && (context.back () == Context::TRAIT_IMPL
+	      || context.back () == Context::TRAIT))
+	rust_error_at (function.get_locus (), ErrorCode::E0706,
+		       "functions in traits cannot be declared %<async%>");
+
+      // if not an associated function but has a self parameter
+      if (context.back () != Context::TRAIT
+	  && context.back () != Context::TRAIT_IMPL
+	  && context.back () != Context::INHERENT_IMPL
+	  && function.has_self_param ())
+	rust_error_at (
+	  function.get_self_param ()->get_locus (),
+	  "%<self%> parameter is only allowed in associated functions");
+
+      if (!function.has_body ())
+	{
+	  if (context.back () == Context::INHERENT_IMPL
+	      || context.back () == Context::TRAIT_IMPL)
+	    rust_error_at (function.get_locus (),
+			   "associated function in %<impl%> without body");
+	  else if (context.back () != Context::TRAIT)
+	    rust_error_at (function.get_locus (),
+			   "free function without a body");
+	}
+
+      if (function.is_variadic ())
+	rust_error_at (function.get_function_params ().back ()->get_locus (),
+		       "only foreign or %<unsafe extern \"C\"%> functions may "
+		       "be C-variadic");
+    }
 
   AST::ContextualASTVisitor::visit (function);
 }

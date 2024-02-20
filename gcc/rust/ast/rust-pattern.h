@@ -142,7 +142,7 @@ public:
     return to_bind;
   }
 
-  Identifier get_ident () const { return variable_ident; }
+  Identifier get_ident () override { return variable_ident; }
 
   bool get_is_mut () const { return is_mut; }
   bool get_is_ref () const { return is_ref; }
