@@ -87,8 +87,6 @@ public:
     std::vector<HIR::NamedFunctionParam> function_params;
     for (auto it = begin; it != end; it++)
       {
-	if (it->get ()->is_self () || it->get ()->is_variadic ())
-	  continue;
 
 	auto param = static_cast<AST::FunctionParam *> (it->get ());
 

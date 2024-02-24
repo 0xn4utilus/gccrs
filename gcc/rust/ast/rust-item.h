@@ -1333,7 +1333,7 @@ public:
 	    Visibility vis, std::vector<Attribute> outer_attrs,
 	    location_t locus, bool is_default = false,
 	    bool is_external_function = false)
-    : VisItem (std::move (vis), std::move (outer_attrs)), ExternalItem (),
+    : VisItem (std::move (vis), std::move (outer_attrs)), ExternalItem (Stmt::node_id),
       qualifiers (std::move (qualifiers)),
       function_name (std::move (function_name)),
       generic_params (std::move (generic_params)),

@@ -1696,6 +1696,8 @@ class ExternalItem : public Visitable
 {
 public:
   ExternalItem () : node_id (Analysis::Mappings::get ()->get_next_node_id ()) {}
+  
+  ExternalItem (NodeId node_id) : node_id (node_id) {}
 
   virtual ~ExternalItem () {}
 
