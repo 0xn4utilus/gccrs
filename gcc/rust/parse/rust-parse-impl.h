@@ -6176,8 +6176,7 @@ Parser<ManagedTokenSource>::parse_external_item ()
 				       std::move (outer_attrs), locus));
       }
     case FN_KW:
-      return parse_external_function_item (std::move (vis),
-					   std::move (outer_attrs));
+      return parse_function (std::move (vis), std::move (outer_attrs), true);
 
     case TYPE:
       return parse_external_type_item (std::move (vis),
